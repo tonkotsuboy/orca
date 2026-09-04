@@ -5,6 +5,7 @@ import {
   type ExecutionHostId
 } from '../../../shared/execution-host'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
+import { getFolderWorkspaceRepoId } from '../../../shared/folder-workspaces'
 import { folderWorkspaceKey, parseWorkspaceKey } from '../../../shared/workspace-scope'
 import {
   findIndexedFolderWorkspaceOwner,
@@ -32,11 +33,18 @@ function getResolvedFolderHost(
   const group = folder
     ? findIndexedProjectGroupOwner(state.projectGroups, folder.projectGroupId, preferredHostId)
     : null
-  const explicitHost = parseExecutionHostId(folder?.executionHostId ?? group?.executionHostId)
+  // An in-place workspace is owned by a Git project rather than a folder group, so that project
+  // is both its host authority and the hydrated ownership the fallback below demands.
+  const ownerRepoId = folder ? getFolderWorkspaceRepoId(folder) : null
+  const ownerRepo = ownerRepoId ? findIndexedRepoOwner(state.repos, ownerRepoId) : null
+  const explicitHost = parseExecutionHostId(
+    folder?.executionHostId ?? group?.executionHostId ?? ownerRepo?.executionHostId
+  )
   if (explicitHost) {
     return explicitHost.id
   }
-  const connectionId = folder?.connectionId?.trim() || group?.connectionId?.trim()
+  const connectionId =
+    folder?.connectionId?.trim() || group?.connectionId?.trim() || ownerRepo?.connectionId?.trim()
   if (connectionId) {
     return toSshExecutionHostId(connectionId)
   }
@@ -46,7 +54,9 @@ function getResolvedFolderHost(
   if (restoredHost?.kind === 'runtime') {
     return restoredHost.id
   }
-  return folder && (group || preferredHostId) ? (preferredHostId ?? LOCAL_EXECUTION_HOST_ID) : null
+  return folder && (group || ownerRepo || preferredHostId)
+    ? (preferredHostId ?? LOCAL_EXECUTION_HOST_ID)
+    : null
 }
 
 /**

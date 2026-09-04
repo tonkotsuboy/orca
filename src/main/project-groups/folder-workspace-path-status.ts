@@ -4,6 +4,7 @@ import type {
   FolderWorkspacePathStatus,
   FolderWorkspacePathStatusRequest
 } from '../../shared/folder-workspace-path-status'
+import { getFolderWorkspaceRepoId } from '../../shared/folder-workspaces'
 import { getProjectGroupSubtreeIds } from '../../shared/project-groups'
 import type { FolderWorkspace } from '../../shared/folder-workspace-types'
 import type { ProjectGroup } from '../../shared/project-group-types'
@@ -183,6 +184,15 @@ export function resolveFolderWorkspaceStatusPath(args: {
     .find((entry) => entry.id === request.folderWorkspaceId)
   if (!workspace) {
     throw new Error('folder_workspace_path_scope_not_found')
+  }
+  const ownerRepoId = getFolderWorkspaceRepoId(workspace)
+  if (ownerRepoId) {
+    const ownerRepo = args.store.getRepos().find((repo) => repo.id === ownerRepoId)
+    return {
+      folderPath: workspace.folderPath,
+      projectGroupId: null,
+      connectionId: workspace.connectionId ?? ownerRepo?.connectionId ?? null
+    }
   }
   const group = args.store
     .getProjectGroups?.()

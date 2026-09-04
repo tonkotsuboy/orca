@@ -1,5 +1,6 @@
 import type { FolderWorkspace } from './folder-workspace-types'
 import type { ProjectGroup } from './project-group-types'
+import type { Repo } from './repo-types'
 import { isTuiAgent } from './tui-agent-config'
 import { normalizeStoredTaskSourceContext } from './task-source-context'
 import { normalizeWorkspaceLinkedItem } from './workspace-linked-item'
@@ -14,9 +15,20 @@ export function normalizeFolderWorkspaceName(
   return trimmed.length > 0 ? trimmed : fallback
 }
 
+/**
+ * The Git project owning a worktree-free workspace, or null when a folder project group owns it.
+ * Guards the type because persisted records are untrusted JSON.
+ */
+export function getFolderWorkspaceRepoId(
+  workspace: Pick<FolderWorkspace, 'repoId'>
+): string | null {
+  return typeof workspace.repoId === 'string' ? workspace.repoId.trim() || null : null
+}
+
 export function normalizeFolderWorkspaces(
   value: unknown,
-  projectGroups: readonly ProjectGroup[]
+  projectGroups: readonly ProjectGroup[],
+  repos: readonly Repo[] = []
 ): FolderWorkspace[] {
   if (!Array.isArray(value)) {
     return []
@@ -27,6 +39,7 @@ export function normalizeFolderWorkspaces(
       folderGroups.set(group.id, group)
     }
   }
+  const reposById = new Map(repos.map((repo) => [repo.id, repo]))
 
   const workspaces: FolderWorkspace[] = []
   const seen = new Set<string>()
@@ -35,20 +48,22 @@ export function normalizeFolderWorkspaces(
       continue
     }
     const raw = candidate as Partial<FolderWorkspace>
-    if (
-      typeof raw.id !== 'string' ||
-      raw.id.trim().length === 0 ||
-      seen.has(raw.id) ||
-      typeof raw.projectGroupId !== 'string' ||
-      !folderGroups.has(raw.projectGroupId)
-    ) {
+    if (typeof raw.id !== 'string' || raw.id.trim().length === 0 || seen.has(raw.id)) {
       continue
     }
-    const group = folderGroups.get(raw.projectGroupId)
+    const ownerRepoId = getFolderWorkspaceRepoId(raw)
+    const ownerRepo = ownerRepoId ? reposById.get(ownerRepoId) : undefined
+    const group =
+      typeof raw.projectGroupId === 'string' ? folderGroups.get(raw.projectGroupId) : undefined
+    // An owner that no longer exists leaves the record unreachable, so drop it rather than
+    // stranding a row whose host and path can never be resolved.
+    if (!ownerRepo && !group) {
+      continue
+    }
     const folderPath =
       typeof raw.folderPath === 'string' && raw.folderPath.trim().length > 0
         ? raw.folderPath
-        : group?.parentPath
+        : (ownerRepo?.path ?? group?.parentPath)
     if (!folderPath) {
       continue
     }
@@ -62,7 +77,8 @@ export function normalizeFolderWorkspaces(
     // carries no generation to fence on. `connectionId` below is the durable pin main projects from.
     workspaces.push({
       id: raw.id,
-      projectGroupId: raw.projectGroupId,
+      projectGroupId: group ? group.id : '',
+      ...(ownerRepo ? { repoId: ownerRepo.id } : {}),
       name: normalizeFolderWorkspaceName(raw.name),
       folderPath,
       connectionId:
@@ -70,7 +86,7 @@ export function normalizeFolderWorkspaces(
           ? raw.connectionId
           : raw.connectionId === null
             ? null
-            : (group?.connectionId ?? null),
+            : (ownerRepo?.connectionId ?? group?.connectionId ?? null),
       ...(creatorProvenance ? { creatorProvenance } : {}),
       linkedTask,
       linkedTaskSourceContext: isWorkspaceLinkedItemSourceContextMatch(

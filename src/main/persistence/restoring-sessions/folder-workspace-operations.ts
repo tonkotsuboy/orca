@@ -52,7 +52,8 @@ export class FolderWorkspacePersistenceOperations {
   }
 
   createFolderWorkspace(input: {
-    projectGroupId: string
+    projectGroupId?: string
+    repoId?: string
     name?: string
     folderPath?: string | null
     linkedTask?: FolderWorkspace['linkedTask']
@@ -62,26 +63,31 @@ export class FolderWorkspacePersistenceOperations {
     createdWithAgent?: FolderWorkspace['createdWithAgent']
     pendingFirstAgentMessageRename?: boolean
   }): FolderWorkspace {
-    const group = (this.state.projectGroups ?? []).find(
-      (entry) => entry.id === input.projectGroupId
-    )
+    const group = input.projectGroupId
+      ? (this.state.projectGroups ?? []).find((entry) => entry.id === input.projectGroupId)
+      : undefined
+    const ownerRepo = input.repoId
+      ? (this.state.repos ?? []).find((repo) => repo.id === input.repoId)
+      : undefined
     // Why trim: the guard below accepts a padded path, so persist the same value it validated.
     const folderPath =
       typeof input.folderPath === 'string' && input.folderPath.trim().length > 0
         ? input.folderPath
-        : group?.parentPath?.trim()
-    if (!group || !folderPath) {
-      throw new Error('Folder-backed project group not found.')
+        : (ownerRepo?.path?.trim() ?? group?.parentPath?.trim())
+    if ((!group && !ownerRepo) || !folderPath) {
+      throw new Error('Folder workspace owner not found.')
     }
+    const ownerName = ownerRepo?.displayName ?? group?.name ?? ''
     const now = Date.now()
     const linkedTask = normalizeWorkspaceLinkedItem(input.linkedTask)
     const sourceContext = normalizeStoredTaskSourceContext(input.linkedTaskSourceContext)
     const workspace: FolderWorkspace = {
       id: randomUUID(),
-      projectGroupId: group.id,
-      name: normalizeFolderWorkspaceName(input.name, `${group.name} workspace`),
+      projectGroupId: ownerRepo ? '' : (group?.id ?? ''),
+      ...(ownerRepo ? { repoId: ownerRepo.id } : {}),
+      name: normalizeFolderWorkspaceName(input.name, `${ownerName} workspace`),
       folderPath,
-      connectionId: input.connectionId ?? group.connectionId ?? null,
+      connectionId: input.connectionId ?? ownerRepo?.connectionId ?? group?.connectionId ?? null,
       ...(input.creatorProvenance ? { creatorProvenance: input.creatorProvenance } : {}),
       linkedTask,
       linkedTaskSourceContext: isWorkspaceLinkedItemSourceContextMatch(linkedTask, sourceContext)

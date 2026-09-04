@@ -31,7 +31,9 @@ function assertLinkedTaskSourceContextMatch(
 
 const FolderWorkspaceCreate = z
   .object({
-    projectGroupId: requiredString('Missing project group id'),
+    projectGroupId: OptionalString,
+    /** Git project owning an in-place workspace in its own checkout. */
+    repoId: OptionalString,
     name: OptionalString,
     folderPath: OptionalString.nullable().optional(),
     connectionId: OptionalString.nullable().optional(),
@@ -41,6 +43,14 @@ const FolderWorkspaceCreate = z
     pendingFirstAgentMessageRename: z.boolean().optional()
   })
   .superRefine(assertLinkedTaskSourceContextMatch)
+  .superRefine((value, ctx) => {
+    if (!value.projectGroupId && !value.repoId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Missing folder workspace owner: pass a project group id or a repo id'
+      })
+    }
+  })
 
 const FolderWorkspaceUpdate = z.object({
   folderWorkspaceId: requiredString('Missing folder workspace id'),

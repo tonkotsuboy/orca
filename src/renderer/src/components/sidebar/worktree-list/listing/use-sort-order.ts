@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
 import { getAllWorktreesFromState } from '@/store/selectors'
+import { getInPlaceWorkspaceCatalog } from '@/store/in-place-workspace-catalog'
 import { track } from '@/lib/telemetry'
 import { tabHasLivePty } from '@/lib/tab-has-live-pty'
 import { persistWorktreeSortOrderByHost } from '@/lib/worktree-sort-order-persistence'
+import type { FolderWorkspace } from '../../../../../../shared/folder-workspace-types'
+import { getFolderWorkspaceRepoId } from '../../../../../../shared/folder-workspaces'
 import type { Repo } from '../../../../../../shared/repo-types'
 import type { Worktree } from '../../../../../../shared/worktree/types'
 import {
@@ -83,10 +86,12 @@ function useDebouncedSortEpoch(worktreeCount: number, sortBy: SortBy): number {
 // Why useMemo not useEffect: order must be computed synchronously before the worktrees memo reads it.
 export function useSidebarWorktreeSortOrder(args: {
   allWorktrees: readonly Worktree[]
+  /** In-place entries join the sorted stream, so their arrival has to re-key the sort. */
+  folderWorkspaces: readonly FolderWorkspace[]
   repoMap: Map<string, Repo>
   sortBy: SortBy
 }): string[] {
-  const { allWorktrees, repoMap, sortBy } = args
+  const { allWorktrees, folderWorkspaces, repoMap, sortBy } = args
   // Non-archived count — detects structural changes (add/remove) so the debounce below can apply immediately.
   const worktreeCount = useMemo(() => {
     let count = 0
@@ -95,8 +100,13 @@ export function useSidebarWorktreeSortOrder(args: {
         count++
       }
     }
+    for (const folderWorkspace of folderWorkspaces) {
+      if (!folderWorkspace.isArchived && getFolderWorkspaceRepoId(folderWorkspace)) {
+        count++
+      }
+    }
     return count
-  }, [allWorktrees])
+  }, [allWorktrees, folderWorkspaces])
   const debouncedSortEpoch = useDebouncedSortEpoch(worktreeCount, sortBy)
 
   // Why a latching ref: a live signal makes Smart authoritative for the session, even after that activity ends.
@@ -104,9 +114,9 @@ export function useSidebarWorktreeSortOrder(args: {
 
   const recomputedSort = useMemo(() => {
     const state = useAppStore.getState()
-    const nonArchivedWorktrees = getAllWorktreesFromState(state).filter(
-      (worktree) => !worktree.isArchived
-    )
+    const nonArchivedWorktrees = getAllWorktreesFromState({
+      worktreesByRepo: getInPlaceWorkspaceCatalog(state)
+    }).filter((worktree) => !worktree.isArchived)
     const now = Date.now()
     // Why precompute: the label tiebreaker runs on every comparison in every mode.
     const labels = buildWorktreeSortLabels(nonArchivedWorktrees)
@@ -159,7 +169,7 @@ export function useSidebarWorktreeSortOrder(args: {
     }
     // debouncedSortEpoch is an intentional trigger not read in the memo; its change (debounced) signals a recompute.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSortEpoch, repoMap, sortBy])
+  }, [debouncedSortEpoch, folderWorkspaces, repoMap, sortBy])
   // Why: stable ID order prevents rank-only refreshes from echoing an unchanged snapshot.
   const sortedIds = useReusedArrayIdentity(recomputedSort.sortedIds)
 

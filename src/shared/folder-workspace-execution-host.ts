@@ -16,6 +16,7 @@ import type { FolderWorkspace } from './folder-workspace-types'
 import type { ProjectGroup } from './project-group-types'
 import type { Repo } from './repo-types'
 import { isPathInsideOrEqual } from './cross-platform-path'
+import { getFolderWorkspaceRepoId } from './folder-workspaces'
 import { getProjectGroupSubtreeIds } from './project-groups'
 import { getRepoExecutionHostId, parseExecutionHostId } from './execution-host'
 
@@ -99,6 +100,13 @@ export function findFolderWorkspaceCandidateRepos(
   const workspace = state.folderWorkspaces.find((entry) => entry.id === folderWorkspaceId)
   if (!workspace) {
     return []
+  }
+  const ownerRepoId = getFolderWorkspaceRepoId(workspace)
+  if (ownerRepoId) {
+    // A repo-backed workspace shares one project's checkout, so that project is the only
+    // candidate — never a sibling repo that happens to sit under the same path.
+    const ownerRepo = state.repos.find((repo) => repo.id === ownerRepoId)
+    return ownerRepo ? [ownerRepo] : []
   }
   const group = state.projectGroups.find((entry) => entry.id === workspace.projectGroupId)
   return getFolderScopeCandidateRepos({

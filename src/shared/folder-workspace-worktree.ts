@@ -1,19 +1,47 @@
 import type { FolderWorkspace } from './folder-workspace-types'
 import type { Worktree } from './worktree/types'
 import { folderWorkspaceKey } from './workspace-scope'
-import { parseExecutionHostId, toSshExecutionHostId } from './execution-host'
+import {
+  parseExecutionHostId,
+  toSshExecutionHostId,
+  type ExecutionHostId
+} from './execution-host'
 import { normalizeWorkspaceCreatorProvenance } from './workspace-creator-provenance'
+import { getFolderWorkspaceRepoId } from './folder-workspaces'
 
-export function folderWorkspaceToWorktree(folderWorkspace: FolderWorkspace): Worktree {
-  const linkedTask = folderWorkspace.linkedTask
-  const creatorProvenance = normalizeWorkspaceCreatorProvenance(folderWorkspace.creatorProvenance)
-  const hostId =
+/**
+ * Git state a repo-backed workspace borrows from the checkout it shares. A worktree-free
+ * workspace runs in the project's own checkout, so its branch and HEAD are that checkout's —
+ * supplying them is what lights up the branch, diff and review surfaces gated on `repo && branch`.
+ */
+export type FolderWorkspaceGitIdentity = {
+  branch: string
+  head: string
+}
+
+/** The host the workspace's row claims: its fetch stamp, else its SSH pin, else this machine. */
+export function getFolderWorkspaceWorktreeHostId(
+  folderWorkspace: Pick<FolderWorkspace, 'executionHostId' | 'connectionId'>
+): ExecutionHostId {
+  return (
     folderWorkspace.executionHostId ??
     (folderWorkspace.connectionId ? toSshExecutionHostId(folderWorkspace.connectionId) : 'local')
+  )
+}
+
+export function folderWorkspaceToWorktree(
+  folderWorkspace: FolderWorkspace,
+  gitIdentity?: FolderWorkspaceGitIdentity | null
+): Worktree {
+  const linkedTask = folderWorkspace.linkedTask
+  const creatorProvenance = normalizeWorkspaceCreatorProvenance(folderWorkspace.creatorProvenance)
+  const hostId = getFolderWorkspaceWorktreeHostId(folderWorkspace)
   const parsedHost = parseExecutionHostId(hostId)
   return {
     id: folderWorkspaceKey(folderWorkspace.id),
-    repoId: `folder-workspace:${folderWorkspace.projectGroupId}`,
+    repoId:
+      getFolderWorkspaceRepoId(folderWorkspace) ??
+      `folder-workspace:${folderWorkspace.projectGroupId}`,
     ...(creatorProvenance ? { creatorProvenance } : {}),
     displayName: folderWorkspace.name,
     comment: folderWorkspace.comment,
@@ -43,8 +71,8 @@ export function folderWorkspaceToWorktree(folderWorkspace: FolderWorkspace): Wor
     workspaceStatus: folderWorkspace.workspaceStatus,
     diffComments: folderWorkspace.diffComments,
     path: folderWorkspace.folderPath,
-    head: '',
-    branch: '',
+    head: gitIdentity?.head ?? '',
+    branch: gitIdentity?.branch ?? '',
     isBare: false,
     isSparse: false,
     isMainWorktree: false,

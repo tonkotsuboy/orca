@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { normalizeFolderWorkspaces } from './folder-workspaces'
 import type { ProjectGroup } from './project-group-types'
+import type { Repo } from './repo-types'
 
 const folderGroup = {
   id: 'group-1',
@@ -58,5 +59,53 @@ describe('normalizeFolderWorkspaces host attribution', () => {
     )
 
     expect(inherited.connectionId).toBe('ssh-group')
+  })
+})
+
+describe('normalizeFolderWorkspaces in-place ownership', () => {
+  const gitRepo = {
+    id: 'repo-1',
+    path: '/tmp/checkouts/orca',
+    displayName: 'orca',
+    connectionId: null
+  } as unknown as Repo
+
+  it('keeps a workspace owned by a Git project and defaults its path to the checkout', () => {
+    const [workspace] = normalizeFolderWorkspaces(
+      [{ id: 'ws-1', repoId: 'repo-1', name: 'Bug hunt' }],
+      [folderGroup],
+      [gitRepo]
+    )
+
+    expect(workspace.repoId).toBe('repo-1')
+    expect(workspace.projectGroupId).toBe('')
+    expect(workspace.folderPath).toBe('/tmp/checkouts/orca')
+  })
+
+  it('inherits the project connection so an SSH checkout keeps its host pin', () => {
+    const [workspace] = normalizeFolderWorkspaces(
+      [{ id: 'ws-2', repoId: 'repo-1', name: 'Remote' }],
+      [folderGroup],
+      [{ ...gitRepo, connectionId: 'ssh-box' } as Repo]
+    )
+
+    expect(workspace.connectionId).toBe('ssh-box')
+  })
+
+  it('drops a workspace whose owning project is gone', () => {
+    expect(
+      normalizeFolderWorkspaces([{ id: 'ws-3', repoId: 'repo-missing', name: 'Orphan' }], [], [])
+    ).toEqual([])
+  })
+
+  it('prefers the project owner when a record carries both owners', () => {
+    const [workspace] = normalizeFolderWorkspaces(
+      [{ id: 'ws-4', projectGroupId: 'group-1', repoId: 'repo-1', name: 'Both' }],
+      [folderGroup],
+      [gitRepo]
+    )
+
+    expect(workspace.repoId).toBe('repo-1')
+    expect(workspace.projectGroupId).toBe('')
   })
 })
