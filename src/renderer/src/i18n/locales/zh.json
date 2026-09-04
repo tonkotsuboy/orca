@@ -1349,6 +1349,8 @@
         "notePasteTooLarge": "笔记字段的粘贴内容过大。",
         "reuseExistingBranch": "复用分支",
         "reuseExistingBranchHint": "检出已有分支，而不是从它创建新分支。",
+        "createInPlace": "不创建工作树直接工作",
+        "createInPlaceHint": "在项目现有的检出目录中运行，而不创建工作树。此处的工作区共享同一个工作目录及其分支。",
         "createMultiple": "创建更多",
         "waitForSetupBeforeAgent": "等待设置完成后再启动智能体",
         "waitForSetupBeforeAgentHelp": "如果设置会安装依赖、MCP 服务器或智能体启动时需要的配置文件，请开启此选项。",
@@ -1375,6 +1377,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "创建工作树",
         "createWorkspace": "创建工作区",
+        "createInPlaceTitle": "创建不带工作树的工作区",
         "fa90f739a5": "创建工作区之前选择项目、工作区名称和智能体。"
       },
       "PullRequestPage": {

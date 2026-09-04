@@ -8,9 +8,8 @@ type FolderSubmitOrchestrationInput = Pick<
   | 'disabledTuiAgents'
   | 'folderCreateDisabled'
   | 'folderSourceRepos'
-  | 'folderTargetConnectionId'
-  | 'folderTargetIsRemote'
-  | 'folderTargetRuntimeEnvironmentId'
+  | 'folderSubmitTarget'
+  | 'isInPlaceTarget'
   | 'isSubmissionCancelled'
   | 'lastAutoNameRef'
   | 'linkedWorkItem'
@@ -19,7 +18,6 @@ type FolderSubmitOrchestrationInput = Pick<
   | 'onCreated'
   | 'persistDraft'
   | 'resolvePendingSmartGitHubSubmit'
-  | 'selectedProjectGroup'
   | 'setCreateError'
   | 'setCreating'
   | 'settings'
@@ -56,9 +54,8 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
     disabledTuiAgents,
     folderCreateDisabled,
     folderSourceRepos,
-    folderTargetConnectionId,
-    folderTargetIsRemote,
-    folderTargetRuntimeEnvironmentId,
+    folderSubmitTarget,
+    isInPlaceTarget,
     isSubmissionCancelled,
     lastAutoNameRef,
     linkedWorkItem,
@@ -67,7 +64,6 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
     onCreated,
     persistDraft,
     resolvePendingSmartGitHubSubmit,
-    selectedProjectGroup,
     setCreateError,
     setCreating,
     settings,
@@ -78,7 +74,9 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
 
   const submitFolderTarget = useCallback(
     async (requestedAgent: TuiAgent | null): Promise<void> => {
-      if (!selectedProjectGroup?.parentPath || folderCreateDisabled) {
+      // An in-place create runs no setup script and needs no folder path probe, so the
+      // folder-group path-status gate must not block it.
+      if (!folderSubmitTarget || (!isInPlaceTarget && folderCreateDisabled)) {
         return
       }
       setCreateError(null)
@@ -112,7 +110,7 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
             ? resolveFolderWorkspaceLaunchDraft(submitLinkedWorkItem, note)
             : null
         const folderWorkspaceCreated = await submitFolderWorkspaceCreate({
-          projectGroup: selectedProjectGroup,
+          owner: folderSubmitTarget.owner,
           name: smartGitHubMetadata?.workspaceName ?? name,
           lastAutoName: lastAutoNameRef.current,
           linkedWorkItem: submitLinkedWorkItem,
@@ -138,18 +136,18 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
                     ? { promptDelivery: 'draft' as const, launchDraftText: folderLaunchDraftText }
                     : {}),
                   nativeChatTranscriptIsLocalReadable:
-                    isNativeChatTranscriptLocalReadable(folderTargetConnectionId)
+                    isNativeChatTranscriptLocalReadable(folderSubmitTarget.connectionId)
                 }
               )
             : undefined,
           terminalWindowsShell: settings?.terminalWindowsShell,
-          isRemote: folderTargetIsRemote,
+          isRemote: folderSubmitTarget.isRemote,
           launchSource: telemetrySource === 'onboarding' ? 'onboarding' : 'new_workspace_composer',
-          runtimeEnvironmentId: folderTargetRuntimeEnvironmentId,
+          runtimeEnvironmentId: folderSubmitTarget.runtimeEnvironmentId,
           settings,
           createFolderWorkspace: (input) =>
             createFolderWorkspace(input, {
-              runtimeEnvironmentId: folderTargetRuntimeEnvironmentId
+              runtimeEnvironmentId: folderSubmitTarget.runtimeEnvironmentId
             }),
           onOpenChange: (open) => {
             if (!open) {
@@ -189,9 +187,8 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
       canResolveFolderSmartGitHubSubmit,
       disabledTuiAgents,
       folderCreateDisabled,
-      folderTargetConnectionId,
-      folderTargetIsRemote,
-      folderTargetRuntimeEnvironmentId,
+      folderSubmitTarget,
+      isInPlaceTarget,
       folderSourceRepos.length,
       isSubmissionCancelled,
       linkedWorkItem,
@@ -200,7 +197,6 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
       onCreated,
       persistDraft,
       resolvePendingSmartGitHubSubmit,
-      selectedProjectGroup,
       settings,
       taskSourceContext,
       telemetrySource,

@@ -4,6 +4,7 @@ export type ComposerRuntimeTargetSelectionInput = Pick<
   ComposerModel,
   | 'actionableHostIds'
   | 'activeRepoId'
+  | 'createInPlace'
   | 'eligibleRepos'
   | 'hostOptions'
   | 'initialEphemeralVmRecipeId'

@@ -47,6 +47,10 @@ export function useComposerInitialTargetState(input: ComposerInitialTargetStateI
   } = input
   const { resolveInitialWorkspaceRunSeed } = decisions
 
+  // Opt-in per submission: creating a worktree stays the default, so this is never restored
+  // from a draft — a persisted "no worktree" would silently change what the next create does.
+  const [createInPlace, setCreateInPlace] = useState(false)
+
   const draftRepoId = persistDraft ? (newWorkspaceDraft?.repoId ?? null) : null
 
   const draftProjectId = persistDraft ? (newWorkspaceDraft?.projectId ?? null) : null
@@ -157,6 +161,8 @@ export function useComposerInitialTargetState(input: ComposerInitialTargetStateI
   }, [actionableHostIds, initialFolderProjectGroupId, projectGroups, selectedProjectGroupId])
 
   return {
+    createInPlace,
+    setCreateInPlace,
     draftRepoId,
     draftProjectId,
     draftProjectGroupId,

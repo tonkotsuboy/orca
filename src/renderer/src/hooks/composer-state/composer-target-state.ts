@@ -37,6 +37,7 @@ export function useComposerTargetState(
   const runtimeTargetSelection = useComposerRuntimeTargetSelection({
     actionableHostIds: composerTargetStore.actionableHostIds,
     activeRepoId: composerTargetStore.activeRepoId,
+    createInPlace: initialTargetState.createInPlace,
     eligibleRepos: composerTargetStore.eligibleRepos,
     hostOptions: composerTargetStore.hostOptions,
     initialEphemeralVmRecipeId: composerTargetStore.initialEphemeralVmRecipeId,

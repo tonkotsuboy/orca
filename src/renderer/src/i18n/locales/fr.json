@@ -1449,6 +1449,8 @@
       "NewWorkspaceComposerCard": {
         "reuseExistingBranch": "Réutiliser la branche",
         "reuseExistingBranchHint": "Faites un checkout de la branche existante au lieu d'en créer une nouvelle à partir de celle-ci.",
+        "createInPlace": "Travailler sans arbre de travail",
+        "createInPlaceHint": "S'exécute dans la copie de travail existante du projet au lieu de créer un arbre de travail. Les espaces de travail ici partagent un seul répertoire de travail et sa branche.",
         "createMultiple": "Créer plus",
         "cbb47ee0dc": "Disponible uniquement pour les projets Git locaux.",
         "d861de981b": "Sparse checkout",
@@ -1532,6 +1534,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "Créer un worktree",
         "createWorkspace": "Créer un espace de travail",
+        "createInPlaceTitle": "Créer un espace de travail sans arbre de travail",
         "fa90f739a5": "Choisissez le projet, le nom de l'espace de travail et l'agent avant de créer l'espace de travail."
       },
       "PullRequestPage": {

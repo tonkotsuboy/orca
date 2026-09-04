@@ -6,7 +6,7 @@ import { tuiAgentToAgentKind } from '@/lib/telemetry'
 import { activateAndRevealFolderWorkspace } from '@/lib/worktree-activation'
 import { isWorkItemLookupText } from '@/lib/work-item-lookup-text'
 import type { FolderWorkspace } from '../../../../shared/folder-workspace-types'
-import type { ProjectGroup } from '../../../../shared/project-group-types'
+import type { FolderWorkspaceComposerOwner } from './folder-workspace-composer-owner'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import { resolveLocalWindowsAgentStartupShell } from '../../../../shared/windows-terminal-shell'
 import type { LaunchSource } from '../../../../shared/telemetry-events'
@@ -42,7 +42,8 @@ export {
 } from './folder-workspace-agent-startup'
 
 type FolderWorkspaceCreateInput = {
-  projectGroupId: string
+  projectGroupId?: string
+  repoId?: string
   name: string
   connectionId?: string | null
   linkedTask: FolderWorkspace['linkedTask']
@@ -52,7 +53,7 @@ type FolderWorkspaceCreateInput = {
 }
 
 type SubmitFolderWorkspaceCreateParams = {
-  projectGroup: ProjectGroup
+  owner: FolderWorkspaceComposerOwner
   name: string
   lastAutoName: string
   linkedWorkItem: LinkedWorkItemSummary | null
@@ -74,7 +75,7 @@ type SubmitFolderWorkspaceCreateParams = {
 }
 
 export async function submitFolderWorkspaceCreate({
-  projectGroup,
+  owner,
   name,
   lastAutoName,
   linkedWorkItem,
@@ -98,11 +99,14 @@ export async function submitFolderWorkspaceCreate({
   const workspaceName =
     nameIsAutoManaged && linkedName
       ? linkedName
-      : name.trim() || linkedName || `${projectGroup.name} workspace`
-  const launchPlatform = getFolderWorkspaceAgentLaunchPlatform(projectGroup)
+      : name.trim() || linkedName || `${owner.name} workspace`
+  const launchPlatform = getFolderWorkspaceAgentLaunchPlatform({
+    connectionId: owner.connectionId,
+    parentPath: owner.path
+  })
   // Why: an SSH folder group runs the plain `orca` relay shim, so the Linux-only
   // `orca-ide` rename must not be applied for remote launches.
-  const launchIsRemote = Boolean(projectGroup.connectionId)
+  const launchIsRemote = Boolean(owner.connectionId)
   const launchShell = resolveLocalWindowsAgentStartupShell({
     platform: launchPlatform,
     isRemote: launchIsRemote,
@@ -146,7 +150,7 @@ export async function submitFolderWorkspaceCreate({
         settings,
         executionHostId: runtimeEnvironmentId
           ? `runtime:${encodeURIComponent(runtimeEnvironmentId)}`
-          : (projectGroup.connectionId ?? 'local'),
+          : (owner.connectionId ?? 'local'),
         hostCapabilities: readLocalRuntimeCapabilitiesOrUnknown(),
         workspaceKind: 'folder',
         promptDelivery: launchDraftPrompt ? 'draft' : 'auto-submit',
@@ -169,11 +173,13 @@ export async function submitFolderWorkspaceCreate({
     note.trim().length > 0
 
   const workspace = await createFolderWorkspace({
-    projectGroupId: projectGroup.id,
+    ...(owner.repoId !== undefined
+      ? { repoId: owner.repoId }
+      : { projectGroupId: owner.projectGroupId }),
     name: workspaceName,
     // Why: SSH folder groups must keep their target provenance even when the
     // focused runtime is local or another host.
-    connectionId: projectGroup.connectionId ?? null,
+    connectionId: owner.connectionId,
     linkedTask: toFolderWorkspaceLinkedTask(linkedWorkItem),
     ...(linkedTaskSourceContext ? { linkedTaskSourceContext } : {}),
     ...(quickAgent ? { createdWithAgent: quickAgent } : {}),
@@ -186,7 +192,7 @@ export async function submitFolderWorkspaceCreate({
     await preflightFolderWorkspaceAgentTrust({
       agent: quickAgent,
       workspacePath: workspace.folderPath,
-      connectionId: workspace.connectionId ?? projectGroup.connectionId
+      connectionId: workspace.connectionId ?? owner.connectionId
     })
   }
   if (startupPlan && !startupPlan.launchToken) {
@@ -241,7 +247,7 @@ export async function submitFolderWorkspaceCreate({
         await preflightFolderWorkspaceAgentTrust({
           agent: quickAgent,
           workspacePath: workspace.folderPath,
-          connectionId: workspace.connectionId ?? projectGroup.connectionId
+          connectionId: workspace.connectionId ?? owner.connectionId
         })
         activation = activateAndRevealFolderWorkspace(workspace.id, {
           ...(startup ? { startup } : {}),
