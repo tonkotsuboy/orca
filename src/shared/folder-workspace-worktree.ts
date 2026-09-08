@@ -1,23 +1,9 @@
 import type { FolderWorkspace } from './folder-workspace-types'
 import type { Worktree } from './worktree/types'
 import { folderWorkspaceKey } from './workspace-scope'
-import {
-  parseExecutionHostId,
-  toSshExecutionHostId,
-  type ExecutionHostId
-} from './execution-host'
+import { parseExecutionHostId, toSshExecutionHostId, type ExecutionHostId } from './execution-host'
 import { normalizeWorkspaceCreatorProvenance } from './workspace-creator-provenance'
 import { getFolderWorkspaceRepoId } from './folder-workspaces'
-
-/**
- * Git state a repo-backed workspace borrows from the checkout it shares. A worktree-free
- * workspace runs in the project's own checkout, so its branch and HEAD are that checkout's —
- * supplying them is what lights up the branch, diff and review surfaces gated on `repo && branch`.
- */
-export type FolderWorkspaceGitIdentity = {
-  branch: string
-  head: string
-}
 
 /** The host the workspace's row claims: its fetch stamp, else its SSH pin, else this machine. */
 export function getFolderWorkspaceWorktreeHostId(
@@ -29,10 +15,9 @@ export function getFolderWorkspaceWorktreeHostId(
   )
 }
 
-export function folderWorkspaceToWorktree(
-  folderWorkspace: FolderWorkspace,
-  gitIdentity?: FolderWorkspaceGitIdentity | null
-): Worktree {
+// Deliberately single-argument: several callers pass this straight to `Array.map`, so a second
+// parameter would silently receive the array index. Borrowed git state is layered on by the caller.
+export function folderWorkspaceToWorktree(folderWorkspace: FolderWorkspace): Worktree {
   const linkedTask = folderWorkspace.linkedTask
   const creatorProvenance = normalizeWorkspaceCreatorProvenance(folderWorkspace.creatorProvenance)
   const hostId = getFolderWorkspaceWorktreeHostId(folderWorkspace)
@@ -71,8 +56,8 @@ export function folderWorkspaceToWorktree(
     workspaceStatus: folderWorkspace.workspaceStatus,
     diffComments: folderWorkspace.diffComments,
     path: folderWorkspace.folderPath,
-    head: gitIdentity?.head ?? '',
-    branch: gitIdentity?.branch ?? '',
+    head: '',
+    branch: '',
     isBare: false,
     isSparse: false,
     isMainWorktree: false,

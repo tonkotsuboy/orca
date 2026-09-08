@@ -25,6 +25,7 @@ describe('useFullSubmitOrchestration cancellation', () => {
       disabledTuiAgents: [],
       executeFullCreation,
       fallbackDefaultAgent: 'claude',
+      isInPlaceTarget: false,
       isProjectGroupTarget: false,
       isSubmissionCancelled: () => cancelled,
       repoId: 'repo-1',

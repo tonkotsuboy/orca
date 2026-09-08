@@ -75,7 +75,10 @@ export type ComposerStoreActions = {
   ) => Promise<{ ok: true } | { ok: false; error: string }>
   createFolderWorkspace: (
     args: {
-      projectGroupId: string
+      /** Owning folder project group. Omitted when `repoId` names a Git project instead. */
+      projectGroupId?: string
+      /** Git project owning an in-place workspace in its own checkout. */
+      repoId?: string
       name?: string
       folderPath?: string | null
       connectionId?: string | null

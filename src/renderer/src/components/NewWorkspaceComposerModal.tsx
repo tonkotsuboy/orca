@@ -234,10 +234,7 @@ function QuickTabBody({
       ? getFolderWorkspacePrimaryActionLabel()
       : cardProps.selectedRepoIsGit
         ? translate('auto.components.NewWorkspaceComposerModal.createWorktree', 'Create worktree')
-        : translate(
-            'auto.components.NewWorkspaceComposerModal.createWorkspace',
-            'Create workspace'
-          )
+        : translate('auto.components.NewWorkspaceComposerModal.createWorkspace', 'Create workspace')
 
   // Cmd/Ctrl+Enter submits. Escape belongs to the dialog's dismissable layer:
   // the page-style "blur the focused field first" rule assumes the user chose

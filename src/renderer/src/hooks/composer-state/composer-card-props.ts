@@ -16,7 +16,6 @@ export function buildComposerCardProps(state: ComposerModel) {
     parentWorktreeId,
     createGateMode,
     createError,
-    createInPlace,
     createMultiple,
     creating,
     detectedAgentIds,
@@ -195,9 +194,7 @@ export function buildComposerCardProps(state: ComposerModel) {
     smartNameSelection,
     onClearSmartNameSelection: handleClearSmartNameSelection,
     canReuseSelectedBranch:
-      !worktreeFreeTarget &&
-      reuseEligibleBranch !== null &&
-      smartNameSelection?.kind === 'branch',
+      !worktreeFreeTarget && reuseEligibleBranch !== null && smartNameSelection?.kind === 'branch',
     reuseSelectedBranch,
     onReuseSelectedBranchChange: handleReuseSelectedBranchChange,
     // Why: "create multiple" applies only to worktree (git) targets; folder-workspace keeps create-and-close.

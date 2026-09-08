@@ -33,6 +33,7 @@ import {
   getFolderWorkspaceAgentLaunchPlatform,
   submitFolderWorkspaceCreate
 } from './folder-workspace-composer-submit'
+import { toProjectGroupComposerOwner } from './folder-workspace-composer-owner'
 
 function makeProjectGroup(): ProjectGroup {
   return {
@@ -96,7 +97,7 @@ describe('submitFolderWorkspaceCreate', () => {
     })
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: 'hi',
       lastAutoName: '',
       linkedWorkItem: null,
@@ -129,7 +130,7 @@ describe('submitFolderWorkspaceCreate', () => {
     const onOpenChange = vi.fn()
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem: null,
@@ -176,7 +177,7 @@ describe('submitFolderWorkspaceCreate', () => {
     const createFolderWorkspace = vi.fn(async () => makeFolderWorkspace())
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: 'Checkout polish',
       lastAutoName: '',
       linkedWorkItem: null,
@@ -209,7 +210,7 @@ describe('submitFolderWorkspaceCreate', () => {
     }
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem,
@@ -254,7 +255,7 @@ describe('submitFolderWorkspaceCreate', () => {
     }
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem,
@@ -288,7 +289,7 @@ describe('submitFolderWorkspaceCreate', () => {
     }
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem,
@@ -350,7 +351,7 @@ describe('submitFolderWorkspaceCreate', () => {
     }
 
     await submitFolderWorkspaceCreate({
-      projectGroup,
+      owner: toProjectGroupComposerOwner(projectGroup),
       name: '',
       lastAutoName: '',
       linkedWorkItem,
@@ -383,7 +384,7 @@ describe('submitFolderWorkspaceCreate', () => {
     const createFolderWorkspace = vi.fn(async () => makeFolderWorkspace())
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: 'Aider followup',
       lastAutoName: '',
       linkedWorkItem: null,
@@ -420,7 +421,7 @@ describe('submitFolderWorkspaceCreate', () => {
     }
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem,
@@ -462,7 +463,7 @@ describe('submitFolderWorkspaceCreate', () => {
     }
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem,
@@ -513,7 +514,7 @@ describe('submitFolderWorkspaceCreate', () => {
     }
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem,
@@ -541,7 +542,7 @@ describe('submitFolderWorkspaceCreate', () => {
     const createFolderWorkspace = vi.fn(async () => makeFolderWorkspace())
 
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem: null,
@@ -572,7 +573,7 @@ describe('submitFolderWorkspaceCreate', () => {
     expect(getFolderWorkspaceAgentLaunchPlatform(projectGroup)).toBe('linux')
 
     await submitFolderWorkspaceCreate({
-      projectGroup,
+      owner: toProjectGroupComposerOwner(projectGroup),
       name: 'WSL folder',
       lastAutoName: '',
       linkedWorkItem: null,
@@ -605,7 +606,7 @@ describe('submitFolderWorkspaceCreate', () => {
     expect(getFolderWorkspaceAgentLaunchPlatform(projectGroup)).toBe('win32')
 
     await submitFolderWorkspaceCreate({
-      projectGroup,
+      owner: toProjectGroupComposerOwner(projectGroup),
       name: 'Remote Windows folder',
       lastAutoName: '',
       linkedWorkItem: null,
@@ -637,7 +638,7 @@ describe('submitFolderWorkspaceCreate', () => {
     const onOpenChange = vi.fn()
 
     await submitFolderWorkspaceCreate({
-      projectGroup,
+      owner: toProjectGroupComposerOwner(projectGroup),
       name: 'SSH workspace',
       lastAutoName: '',
       linkedWorkItem: null,
@@ -669,7 +670,7 @@ describe('submitFolderWorkspaceCreate', () => {
 
     await expect(
       submitFolderWorkspaceCreate({
-        projectGroup: makeProjectGroup(),
+        owner: toProjectGroupComposerOwner(makeProjectGroup()),
         name: 'hi',
         lastAutoName: '',
         linkedWorkItem: null,
@@ -720,7 +721,7 @@ describe('submitFolderWorkspaceCreate native-chat launch draft', () => {
 
   it('mirrors a startup-paste draft into the chat composer', async () => {
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem: linkedIssue,
@@ -737,7 +738,7 @@ describe('submitFolderWorkspaceCreate native-chat launch draft', () => {
 
   it('mirrors an argv-prefill draft, which never lands in startupPlan.draftPrompt', async () => {
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem: linkedIssue,
@@ -759,7 +760,7 @@ describe('submitFolderWorkspaceCreate native-chat launch draft', () => {
 
   it('mirrors a multi-line draft into chat', async () => {
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem: linkedIssue,
@@ -783,7 +784,7 @@ describe('submitFolderWorkspaceCreate native-chat launch draft', () => {
 
   it('does not mirror an unlinked note, which is submitted rather than drafted', async () => {
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem: null,
@@ -836,7 +837,7 @@ describe('folder-workspace draft: seeded set == chat-opening set', () => {
     ['startup-paste multi-line', 'codex' as const, 'Reproduce on Windows first', true]
   ])('%s', async (_label, quickAgent, note, expectMirrored) => {
     await submitFolderWorkspaceCreate({
-      projectGroup: makeProjectGroup(),
+      owner: toProjectGroupComposerOwner(makeProjectGroup()),
       name: '',
       lastAutoName: '',
       linkedWorkItem: linkedIssue,

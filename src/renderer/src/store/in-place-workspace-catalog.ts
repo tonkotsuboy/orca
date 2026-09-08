@@ -2,18 +2,14 @@ import type { Worktree } from '../../../shared/worktree/types'
 import type { FolderWorkspace } from '../../../shared/folder-workspace-types'
 import {
   folderWorkspaceToWorktree,
-  getFolderWorkspaceWorktreeHostId,
-  type FolderWorkspaceGitIdentity
+  getFolderWorkspaceWorktreeHostId
 } from '../../../shared/folder-workspace-worktree'
 import { getFolderWorkspaceRepoId } from '../../../shared/folder-workspaces'
 import type { ExecutionHostId } from '../../../shared/execution-host'
 import { getWorktreeMapFromState } from './selectors'
 import type { AppState } from './types'
 
-type InPlaceWorkspaceCatalogState = Pick<
-  AppState,
-  'worktreesByRepo' | 'folderWorkspaces' | 'repos'
->
+type InPlaceWorkspaceCatalogState = Pick<AppState, 'worktreesByRepo' | 'folderWorkspaces' | 'repos'>
 
 type CatalogCacheEntry = {
   folderWorkspaces: readonly FolderWorkspace[]
@@ -32,7 +28,7 @@ const catalogCache = new WeakMap<AppState['worktreesByRepo'], CatalogCacheEntry>
 function resolveSharedCheckoutGitIdentity(
   repoWorktrees: readonly Worktree[] | undefined,
   hostId: ExecutionHostId
-): FolderWorkspaceGitIdentity | null {
+): Pick<Worktree, 'branch' | 'head'> | null {
   const mainWorktrees = repoWorktrees?.filter((worktree) => worktree.isMainWorktree) ?? []
   // Prefer the row on this workspace's own host: one repo id can be registered on several.
   const shared = mainWorktrees.find((worktree) => worktree.hostId === hostId) ?? mainWorktrees[0]
@@ -71,13 +67,12 @@ export function getInPlaceWorkspaceCatalog(
     if (!repoId || !knownRepoIds.has(repoId)) {
       continue
     }
-    const row = folderWorkspaceToWorktree(
-      folderWorkspace,
-      resolveSharedCheckoutGitIdentity(
-        state.worktreesByRepo[repoId],
-        getFolderWorkspaceWorktreeHostId(folderWorkspace)
-      )
+    const gitIdentity = resolveSharedCheckoutGitIdentity(
+      state.worktreesByRepo[repoId],
+      getFolderWorkspaceWorktreeHostId(folderWorkspace)
     )
+    const base = folderWorkspaceToWorktree(folderWorkspace)
+    const row = gitIdentity ? { ...base, ...gitIdentity } : base
     const rows = rowsByRepoId.get(repoId)
     if (rows) {
       rows.push(row)
@@ -105,8 +100,6 @@ export function getInPlaceWorkspaceCatalog(
  * Id-keyed view of the catalog above. The sidebar resolves a dragged or context-menued row
  * through this, so an in-place row has to be addressable by id here too.
  */
-export function getInPlaceWorkspaceMap(
-  state: InPlaceWorkspaceCatalogState
-): Map<string, Worktree> {
+export function getInPlaceWorkspaceMap(state: InPlaceWorkspaceCatalogState): Map<string, Worktree> {
   return getWorktreeMapFromState({ worktreesByRepo: getInPlaceWorkspaceCatalog(state) })
 }

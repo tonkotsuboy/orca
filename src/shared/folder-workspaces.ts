@@ -77,7 +77,9 @@ export function normalizeFolderWorkspaces(
     // carries no generation to fence on. `connectionId` below is the durable pin main projects from.
     workspaces.push({
       id: raw.id,
-      projectGroupId: group ? group.id : '',
+      // The two owners are mutually exclusive, and the repo wins to match the create path;
+      // keeping both would let a reload flip which owner the rest of the code reads.
+      projectGroupId: ownerRepo ? '' : (group?.id ?? ''),
       ...(ownerRepo ? { repoId: ownerRepo.id } : {}),
       name: normalizeFolderWorkspaceName(raw.name),
       folderPath,

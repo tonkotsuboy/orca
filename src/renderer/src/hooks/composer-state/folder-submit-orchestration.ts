@@ -135,8 +135,9 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
                   ...(folderLaunchDraftText
                     ? { promptDelivery: 'draft' as const, launchDraftText: folderLaunchDraftText }
                     : {}),
-                  nativeChatTranscriptIsLocalReadable:
-                    isNativeChatTranscriptLocalReadable(folderSubmitTarget.connectionId)
+                  nativeChatTranscriptIsLocalReadable: isNativeChatTranscriptLocalReadable(
+                    folderSubmitTarget.connectionId
+                  )
                 }
               )
             : undefined,
