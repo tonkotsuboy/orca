@@ -1,12 +1,8 @@
 import React, { useCallback, useMemo } from 'react'
 import { useAppStore } from '@/store'
 import { useShallow } from 'zustand/react/shallow'
-import {
-  useAllWorktrees,
-  useProjectHostSetupProjection,
-  useRepoMap,
-  useWorktreeMap
-} from '@/store/selectors'
+import { useAllWorktrees, useProjectHostSetupProjection, useRepoMap } from '@/store/selectors'
+import { getInPlaceWorkspaceMap } from '@/store/in-place-workspace-catalog'
 import type { ProjectGroup } from '../../../../shared/project-group-types'
 import type { Repo } from '../../../../shared/repo-types'
 import {
@@ -58,7 +54,9 @@ const WorktreeList = React.memo(function WorktreeList({
   // ── Granular selectors (each is a primitive or shallow-stable ref) ──
   const allWorktrees = useAllWorktrees()
   const repoMap = useRepoMap()
-  const worktreeMap = useWorktreeMap()
+  // In-place rows must be addressable by id here: drag, context menu and status moves
+  // all resolve the row through this map before mutating it.
+  const worktreeMap = useAppStore(getInPlaceWorkspaceMap)
   const repos = useAppStore((s) => s.repos)
   const worktreeLineageById = useAppStore((s) => s.worktreeLineageById)
   const workspaceLineageByChildKey = useAppStore((s) => s.workspaceLineageByChildKey)
@@ -105,7 +103,12 @@ const WorktreeList = React.memo(function WorktreeList({
 
   const agentSendTargetWorktreeId = useAgentSendTargetWorktreeId()
   const { filterState, hasFilters, clearFilters } = useSidebarWorktreeFilters()
-  const sortedIds = useSidebarWorktreeSortOrder({ allWorktrees, repoMap, sortBy })
+  const sortedIds = useSidebarWorktreeSortOrder({
+    allWorktrees,
+    folderWorkspaces,
+    repoMap,
+    sortBy
+  })
   const manualOrderCatalog = useMemo(
     () => buildWorktreeManualOrderCatalog({ worktrees: allWorktrees, folderWorkspaces }),
     [allWorktrees, folderWorkspaces]

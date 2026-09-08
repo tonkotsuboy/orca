@@ -362,7 +362,7 @@ describe('Store', () => {
     const group = store.createProjectGroup({ name: 'Manual', createdFrom: 'manual' })
 
     expect(() => store.createFolderWorkspace({ projectGroupId: group.id })).toThrow(
-      'Folder-backed project group not found.'
+      'Folder workspace owner not found.'
     )
   })
 
@@ -385,7 +385,7 @@ describe('Store', () => {
       '/workspace/platform'
     )
     expect(() => store.createFolderWorkspace({ projectGroupId: blank.id })).toThrow(
-      'Folder-backed project group not found.'
+      'Folder workspace owner not found.'
     )
   })
 

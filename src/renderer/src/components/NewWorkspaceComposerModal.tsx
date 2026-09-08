@@ -229,11 +229,12 @@ function QuickTabBody({
     (option) => option.id === cardProps.selectedProjectId
   )
   const isFolderWorkspaceTarget = selectedProjectOption?.kind === 'project-group'
-  const primaryActionLabel = isFolderWorkspaceTarget
-    ? getFolderWorkspacePrimaryActionLabel()
-    : cardProps.selectedRepoIsGit
-      ? translate('auto.components.NewWorkspaceComposerModal.createWorktree', 'Create worktree')
-      : translate('auto.components.NewWorkspaceComposerModal.createWorkspace', 'Create workspace')
+  const primaryActionLabel =
+    isFolderWorkspaceTarget || cardProps.createInPlace
+      ? getFolderWorkspacePrimaryActionLabel()
+      : cardProps.selectedRepoIsGit
+        ? translate('auto.components.NewWorkspaceComposerModal.createWorktree', 'Create worktree')
+        : translate('auto.components.NewWorkspaceComposerModal.createWorkspace', 'Create workspace')
 
   // Cmd/Ctrl+Enter submits. Escape belongs to the dialog's dismissable layer:
   // the page-style "blur the focused field first" rule assumes the user chose
@@ -280,7 +281,12 @@ function QuickTabBody({
                 'auto.components.sidebar.FolderWorkspaceComposerDialog.title',
                 'Create Folder Workspace'
               )
-            : primaryActionLabel}
+            : cardProps.createInPlace
+              ? translate(
+                  'auto.components.NewWorkspaceComposerModal.createInPlaceTitle',
+                  'Create workspace without a worktree'
+                )
+              : primaryActionLabel}
         </DialogTitle>
         <DialogDescription className="sr-only">
           {translate(

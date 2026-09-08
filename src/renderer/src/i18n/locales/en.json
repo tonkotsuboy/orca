@@ -1623,6 +1623,8 @@
       "NewWorkspaceComposerCard": {
         "reuseExistingBranch": "Reuse branch",
         "reuseExistingBranchHint": "Check out the existing branch instead of creating a new one from it.",
+        "createInPlace": "Work without a worktree",
+        "createInPlaceHint": "Run in the project's existing checkout instead of creating a worktree. Workspaces here share one working directory and its branch.",
         "createMultiple": "Create more",
         "cbb47ee0dc": "Only available for local Git projects.",
         "d861de981b": "Sparse checkout",
@@ -1706,6 +1708,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "Create worktree",
         "createWorkspace": "Create workspace",
+        "createInPlaceTitle": "Create workspace without a worktree",
         "fa90f739a5": "Choose the project, workspace name, and agent before creating the workspace."
       },
       "PullRequestPage": {

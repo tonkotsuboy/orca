@@ -1346,6 +1346,8 @@
         "notePasteTooLarge": "El contenido pegado es demasiado grande para el campo de nota.",
         "reuseExistingBranch": "Reutilizar rama",
         "reuseExistingBranchHint": "Haz checkout de la rama existente en lugar de crear una nueva a partir de ella.",
+        "createInPlace": "Trabajar sin árbol de trabajo",
+        "createInPlaceHint": "Se ejecuta en la copia de trabajo existente del proyecto en lugar de crear un árbol de trabajo. Los espacios de trabajo aquí comparten un único directorio de trabajo y su rama.",
         "createMultiple": "Crear más",
         "waitForSetupBeforeAgent": "Esperar a que termine el setup antes de iniciar el agente",
         "waitForSetupBeforeAgentHelp": "Activa esto cuando el setup instale dependencias, servidores MCP o archivos de configuración que el agente necesita al iniciar.",
@@ -1372,6 +1374,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "Crear worktree",
         "createWorkspace": "Crear espacio de trabajo",
+        "createInPlaceTitle": "Crear espacio de trabajo sin árbol de trabajo",
         "fa90f739a5": "Elija el proyecto, el nombre del espacio de trabajo y el agente antes de crear el espacio de trabajo."
       },
       "PullRequestPage": {

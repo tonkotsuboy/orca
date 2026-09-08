@@ -1,19 +1,32 @@
 import type { FolderWorkspace } from './folder-workspace-types'
 import type { Worktree } from './worktree/types'
 import { folderWorkspaceKey } from './workspace-scope'
-import { parseExecutionHostId, toSshExecutionHostId } from './execution-host'
+import { parseExecutionHostId, toSshExecutionHostId, type ExecutionHostId } from './execution-host'
 import { normalizeWorkspaceCreatorProvenance } from './workspace-creator-provenance'
+import { getFolderWorkspaceRepoId } from './folder-workspaces'
 
+/** The host the workspace's row claims: its fetch stamp, else its SSH pin, else this machine. */
+export function getFolderWorkspaceWorktreeHostId(
+  folderWorkspace: Pick<FolderWorkspace, 'executionHostId' | 'connectionId'>
+): ExecutionHostId {
+  return (
+    folderWorkspace.executionHostId ??
+    (folderWorkspace.connectionId ? toSshExecutionHostId(folderWorkspace.connectionId) : 'local')
+  )
+}
+
+// Deliberately single-argument: several callers pass this straight to `Array.map`, so a second
+// parameter would silently receive the array index. Borrowed git state is layered on by the caller.
 export function folderWorkspaceToWorktree(folderWorkspace: FolderWorkspace): Worktree {
   const linkedTask = folderWorkspace.linkedTask
   const creatorProvenance = normalizeWorkspaceCreatorProvenance(folderWorkspace.creatorProvenance)
-  const hostId =
-    folderWorkspace.executionHostId ??
-    (folderWorkspace.connectionId ? toSshExecutionHostId(folderWorkspace.connectionId) : 'local')
+  const hostId = getFolderWorkspaceWorktreeHostId(folderWorkspace)
   const parsedHost = parseExecutionHostId(hostId)
   return {
     id: folderWorkspaceKey(folderWorkspace.id),
-    repoId: `folder-workspace:${folderWorkspace.projectGroupId}`,
+    repoId:
+      getFolderWorkspaceRepoId(folderWorkspace) ??
+      `folder-workspace:${folderWorkspace.projectGroupId}`,
     ...(creatorProvenance ? { creatorProvenance } : {}),
     displayName: folderWorkspace.name,
     comment: folderWorkspace.comment,

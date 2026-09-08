@@ -129,7 +129,9 @@ function assertFolderWorkspaceLinkedSourceContextMatch(
 
 export const FolderWorkspaceCreateArgs = z
   .object({
-    projectGroupId: z.string().min(1),
+    projectGroupId: z.string().min(1).optional(),
+    /** Git project owning a worktree-free workspace in its own checkout. */
+    repoId: z.string().min(1).optional(),
     name: z.string().optional(),
     folderPath: z.string().nullable().optional(),
     connectionId: z.string().nullable().optional(),
@@ -139,6 +141,14 @@ export const FolderWorkspaceCreateArgs = z
     pendingFirstAgentMessageRename: z.boolean().optional()
   })
   .superRefine(assertFolderWorkspaceLinkedSourceContextMatch)
+  .superRefine((value, ctx) => {
+    if (!value.projectGroupId && !value.repoId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'A folder workspace needs either a project group or a repo as its owner'
+      })
+    }
+  })
 
 export const FolderWorkspaceUpdateArgs = z.object({
   folderWorkspaceId: z.string().min(1),

@@ -79,6 +79,9 @@ export type NewWorkspaceComposerCardProps = {
   canReuseSelectedBranch: boolean
   reuseSelectedBranch: boolean
   onReuseSelectedBranchChange: (next: boolean) => void
+  canCreateInPlace?: boolean
+  createInPlace?: boolean
+  onCreateInPlaceChange?: (next: boolean) => void
   showCreateMultiple?: boolean
   createMultiple?: boolean
   onCreateMultipleChange?: (next: boolean) => void

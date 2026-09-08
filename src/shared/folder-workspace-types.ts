@@ -16,7 +16,10 @@ export type WorkspaceKey = `worktree:${string}` | `folder:${string}`
 
 export type FolderWorkspace = {
   id: string
+  /** Owning folder project group, or `''` when `repoId` names the owning Git project instead. */
   projectGroupId: string
+  /** Git project that owns this worktree-free workspace. Mutually exclusive with projectGroupId. */
+  repoId?: string
   name: string
   folderPath: string
   /** SSH target ID for folder workspaces whose folder path lives remotely. */

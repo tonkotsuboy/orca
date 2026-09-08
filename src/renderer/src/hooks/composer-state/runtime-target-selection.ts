@@ -2,6 +2,7 @@ import type { ComposerRuntimeTargetSelectionInput } from './composer-target-inpu
 
 import { useEffect, useMemo, useRef } from 'react'
 import { getFolderSourceRepos } from '@/components/sidebar/folder-workspace-composer-helpers'
+import { useFolderSubmitTarget } from './folder-submit-target'
 import { parseExecutionHostId, getRepoExecutionHostId } from '../../../../shared/execution-host'
 import { getSelectedRepoSshGate } from '@/lib/new-workspace-ssh-gate'
 import { useFolderWorkspaceComposerPathStatus } from '@/components/sidebar/folder-workspace-composer-path-status'
@@ -23,6 +24,7 @@ export function useComposerRuntimeTargetSelection(input: ComposerRuntimeTargetSe
   const {
     actionableHostIds,
     activeRepoId,
+    createInPlace,
     eligibleRepos,
     hostOptions,
     initialEphemeralVmRecipeId,
@@ -244,7 +246,24 @@ export function useComposerRuntimeTargetSelection(input: ComposerRuntimeTargetSe
     repoIdRef.current = repoId
   }, [repoId])
 
+  // In-place creation needs a Git project: a folder project already has no worktree to skip, and a
+  // folder-group target reaches the same submit path through `isProjectGroupTarget`.
+  const inPlaceRepo = createInPlace && selectedRepo && selectedRepoIsGit ? selectedRepo : null
+  const isInPlaceTarget = inPlaceRepo !== null
+
+  const folderSubmitTarget = useFolderSubmitTarget({
+    inPlaceRepo,
+    inPlaceRepoExecutionHostId: selectedRepoExecutionHostId,
+    inPlaceRepoIsRemote: selectedRepoIsRemote,
+    selectedProjectGroup,
+    folderTargetConnectionId,
+    folderTargetRuntimeEnvironmentId,
+    folderTargetIsRemote
+  })
+
   return {
+    isInPlaceTarget,
+    folderSubmitTarget,
     isProjectGroupTarget,
     folderSourceRepos,
     parsedFolderTargetHost,

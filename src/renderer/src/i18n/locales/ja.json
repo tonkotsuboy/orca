@@ -1346,6 +1346,8 @@
         "notePasteTooLarge": "メモ欄への貼り付け内容が大きすぎます。",
         "reuseExistingBranch": "ブランチを再利用",
         "reuseExistingBranchHint": "既存のブランチから新規ブランチを作成せず、そのブランチをチェックアウトします。",
+        "createInPlace": "ワークツリーを作らずに作業",
+        "createInPlaceHint": "ワークツリーを作成せず、プロジェクト既存のチェックアウトで実行します。ここに作成したワークスペースは 1 つの作業ディレクトリとそのブランチを共有します。",
         "createMultiple": "さらに作成",
         "waitForSetupBeforeAgent": "セットアップが完了するまで待ってから Agent を開始してください",
         "waitForSetupBeforeAgentHelp": "セットアップによって、起動時に Agent に必要な依存関係、MCP サーバー、または構成ファイルがインストールされるときに、これをオンにします。",
@@ -1372,6 +1374,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "ワークツリーを作成する",
         "createWorkspace": "ワークスペースを作成",
+        "createInPlaceTitle": "ワークツリーなしでワークスペースを作成",
         "fa90f739a5": "ワークスペースを作成する前に、プロジェクト、ワークスペース名、および Agent を選択します。"
       },
       "PullRequestPage": {

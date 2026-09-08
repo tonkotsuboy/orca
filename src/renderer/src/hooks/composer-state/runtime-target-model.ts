@@ -6,11 +6,28 @@ import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { OrcaVmRecipe } from '../../../../shared/orca-yaml-hook-types'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { AgentStartupShell } from '../../../../shared/tui-agent-startup-shell'
+import type { FolderWorkspaceComposerOwner } from '@/components/sidebar/folder-workspace-composer-owner'
 import type { NewWorkspaceProjectOption } from '@/lib/new-workspace-project-options'
 import type { ProjectHostSetupOption } from '@/lib/project-host-setup-options'
 import type { WorkspaceCreationTargetResolution } from '@/lib/project-host-workspace-target'
 
+/**
+ * The resolved owner and host for the worktree-free submit path — a folder project group, or the
+ * Git project an in-place workspace runs inside. Null when neither target is selected.
+ *
+ * `connectionId` is not `owner.connectionId`: a runtime-hosted folder group keeps its SSH pin as
+ * provenance on the record while executing on the runtime, so the launch host is nulled here only.
+ */
+export type FolderWorkspaceSubmitTarget = {
+  owner: FolderWorkspaceComposerOwner
+  connectionId: string | null
+  runtimeEnvironmentId: string | null
+  isRemote: boolean
+}
+
 export type ComposerRuntimeTargetModel = {
+  isInPlaceTarget: boolean
+  folderSubmitTarget: FolderWorkspaceSubmitTarget | null
   isProjectGroupTarget: boolean
   folderSourceRepos: Repo[]
   parsedFolderTargetHost: ParsedExecutionHost | null

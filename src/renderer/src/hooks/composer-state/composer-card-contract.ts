@@ -19,6 +19,7 @@ export type ComposerCardSourceProps = Pick<
   | 'selectedRepoProjectId'
   | 'smartNameSelection'
   | 'reuseSelectedBranch'
+  | 'createInPlace'
   | 'createMultiple'
   | 'agentPrompt'
   | 'attachmentPaths'
@@ -82,6 +83,8 @@ export type ComposerCardActionProps = {
   onReuseSelectedBranchChange: ComposerModel['handleReuseSelectedBranchChange']
   showCreateMultiple: boolean
   onCreateMultipleChange: ComposerModel['setCreateMultiple']
+  canCreateInPlace: boolean
+  onCreateInPlaceChange: ComposerModel['setCreateInPlace']
   onAgentPromptChange: ComposerModel['setAgentPrompt']
   linkedOnlyTemplatePreview: string | null
   getAttachmentLabel: (pathValue: string) => string

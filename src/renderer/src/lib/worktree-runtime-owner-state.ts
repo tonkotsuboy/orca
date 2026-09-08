@@ -20,7 +20,7 @@ export type WorktreeRuntimeOwnerState = {
   >
   folderWorkspaces?: readonly Pick<
     FolderWorkspace,
-    'id' | 'projectGroupId' | 'connectionId' | 'executionHostId'
+    'id' | 'projectGroupId' | 'repoId' | 'connectionId' | 'executionHostId'
   >[]
   projectGroups?: readonly Pick<ProjectGroup, 'id' | 'connectionId' | 'executionHostId'>[]
   restoredRuntimeHostIdByWorkspaceSessionKey?: Record<string, ExecutionHostId>

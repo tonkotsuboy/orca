@@ -1,4 +1,5 @@
 import type { FolderWorkspace } from '../../../../../../shared/folder-workspace-types'
+import { getFolderWorkspaceRepoId } from '../../../../../../shared/folder-workspaces'
 import type { ProjectGroup } from '../../../../../../shared/project-group-types'
 import type { WorkspaceStatusDefinition } from '../../../../../../shared/worktree/types'
 import {
@@ -30,6 +31,11 @@ export function getRenderableFolderWorkspaces(
   const projectGroupsById = new Map(projectGroups.map((group) => [group.id, group]))
   const renderable: RenderableFolderWorkspace[] = []
   for (const folderWorkspace of folderWorkspaces) {
+    // A repo-backed workspace renders inside its project's own section, merged into the worktree
+    // stream by getRepoBackedWorkspaceCatalog; this lane would render it a second time.
+    if (getFolderWorkspaceRepoId(folderWorkspace)) {
+      continue
+    }
     const projectGroup = projectGroupsById.get(folderWorkspace.projectGroupId)
     // A group filtered out for host visibility legitimately hides its workspaces.
     if (!projectGroup?.parentPath) {

@@ -8,6 +8,7 @@ import {
   getFolderWorkspacePathStatus,
   getFolderWorkspacePathStatusForPath
 } from '../../project-groups/folder-workspace-path-status'
+import { resolveFolderWorkspaceCreateOwner } from '../../project-groups/folder-workspace-create-owner'
 import { getSshFilesystemProvider } from '../../providers/ssh-filesystem-dispatch'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import { notifyReposChanged } from './repos-changed-notification'
@@ -44,22 +45,10 @@ export function registerFolderWorkspaceHandlers(
         'invalid_folder_workspace_create_args'
       )
       const projectGroups = store.getProjectGroups()
-      const group = projectGroups.find((entry) => entry.id === args.projectGroupId)
-      const folderPath =
-        typeof args.folderPath === 'string' && args.folderPath.trim().length > 0
-          ? args.folderPath
-          : group?.parentPath
-      if (!group || !folderPath) {
-        throw new Error('folder_workspace_project_group_not_found')
-      }
+      const repos = store.getRepos()
+      const owner = resolveFolderWorkspaceCreateOwner({ ...args, projectGroups, repos })
       const status = await getFolderWorkspacePathStatusForPath(
-        {
-          folderPath,
-          projectGroupId: group.id,
-          connectionId: args.connectionId ?? group.connectionId ?? null,
-          projectGroups,
-          repos: store.getRepos()
-        },
+        { ...owner, projectGroups, repos },
         { getSshFilesystemProvider }
       )
       assertFolderWorkspacePathUsable(status)

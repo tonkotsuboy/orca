@@ -10,6 +10,7 @@ import {
   getFolderWorkspacePathStatus,
   getFolderWorkspacePathStatusForPath
 } from '../project-groups/folder-workspace-path-status'
+import { resolveFolderWorkspaceCreateOwner } from '../project-groups/folder-workspace-create-owner'
 import { getSshFilesystemProvider } from '../providers/ssh-filesystem-dispatch'
 import type { RuntimeStore } from './runtime-store-contract'
 import { folderWorkspaceKey } from '../../shared/workspace-scope'
@@ -120,7 +121,8 @@ export class RuntimeProjectGroupController {
   }
 
   async createFolderWorkspace(input: {
-    projectGroupId: string
+    projectGroupId?: string
+    repoId?: string
     name?: string
     folderPath?: string | null
     connectionId?: string | null
@@ -135,22 +137,10 @@ export class RuntimeProjectGroupController {
       throw new Error('runtime_unavailable')
     }
     const projectGroups = store.getProjectGroups?.() ?? []
-    const group = projectGroups.find((entry) => entry.id === input.projectGroupId)
-    const folderPath =
-      typeof input.folderPath === 'string' && input.folderPath.trim().length > 0
-        ? input.folderPath
-        : group?.parentPath
-    if (!group || !folderPath) {
-      throw new Error('folder_workspace_project_group_not_found')
-    }
+    const repos = store.getRepos()
+    const owner = resolveFolderWorkspaceCreateOwner({ ...input, projectGroups, repos })
     const status = await getFolderWorkspacePathStatusForPath(
-      {
-        folderPath,
-        projectGroupId: group.id,
-        connectionId: input.connectionId ?? group.connectionId ?? null,
-        projectGroups,
-        repos: store.getRepos()
-      },
+      { ...owner, projectGroups, repos },
       { getSshFilesystemProvider }
     )
     assertFolderWorkspacePathUsable(status)

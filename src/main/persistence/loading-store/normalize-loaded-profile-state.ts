@@ -50,7 +50,11 @@ export function normalizeLoadedProfileState(
     // Why: persisted catalog rows are untrusted JSON; consumers call string methods on fields the type says are strings.
     projects: projectCatalog.projects,
     projectHostSetups: projectCatalog.projectHostSetups,
-    folderWorkspaces: normalizeFolderWorkspaces(parsed.folderWorkspaces, normalizedProjectGroups),
+    folderWorkspaces: normalizeFolderWorkspaces(
+      parsed.folderWorkspaces,
+      normalizedProjectGroups,
+      migratedExternalVisibility.repos
+    ),
     folderWorkspaceDiffComments: normalizeFolderWorkspaceDiffComments(
       parsed.folderWorkspaceDiffComments
     ),

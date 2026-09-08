@@ -1,6 +1,7 @@
 import type { WorkspaceKey } from '../../../shared/folder-workspace-types'
 import { LOCAL_EXECUTION_HOST_ID, type ExecutionHostId } from '../../../shared/execution-host'
-import { parseWorkspaceKey } from '../../../shared/workspace-scope'
+import { getFolderWorkspaceRepoId } from '../../../shared/folder-workspaces'
+import { folderWorkspaceKey, parseWorkspaceKey } from '../../../shared/workspace-scope'
 import type { PersistedState } from '../../../shared/persisted-state-types'
 import type { WorkspaceSessionState } from '../../../shared/workspace-session-state-types'
 import { removeWorkspaceSessionOwners } from '../restoring-sessions/session-owner-removal'
@@ -41,6 +42,23 @@ export function pruneWorktreeStateForRepo(
   // "unknown" workspaces. Owner keys carry no host and can repeat across partitions, so collect every
   // prefix match (before the worktreeMeta deletes below) and let the per-partition gating decide.
   const ownerKeysToPrune = new Set<string>()
+  // Repo-backed workspaces share the project's own checkout, and nothing else keys them to the
+  // repo. A full removal takes them with it; a host-scoped one leaves them to the surviving host.
+  const removedFolderWorkspaceKeys = new Set<string>()
+  if (hostId === null) {
+    for (const workspace of state.folderWorkspaces ?? []) {
+      if (getFolderWorkspaceRepoId(workspace) === id) {
+        const key = folderWorkspaceKey(workspace.id)
+        removedFolderWorkspaceKeys.add(key)
+        ownerKeysToPrune.add(key)
+      }
+    }
+    if (removedFolderWorkspaceKeys.size > 0) {
+      state.folderWorkspaces = (state.folderWorkspaces ?? []).filter(
+        (workspace) => !removedFolderWorkspaceKeys.has(folderWorkspaceKey(workspace.id))
+      )
+    }
+  }
   const collectPrefixedKeys = (keys: Iterable<string>): void => {
     for (const key of keys) {
       const rawKey = isWorktreeHostIdentity(key) ? getWorktreeIdFromHostIdentity(key) : key
@@ -127,7 +145,16 @@ export function pruneWorktreeStateForRepo(
     }
     if (parentScope?.type === 'worktree' && belongsToHost(parentScope.worktreeId)) {
       delete state.workspaceLineageByChildKey[childKey as WorkspaceKey]
+      continue
+    }
+    if (
+      removedFolderWorkspaceKeys.has(childKey) ||
+      removedFolderWorkspaceKeys.has(lineage.parentWorkspaceKey)
+    ) {
+      delete state.workspaceLineageByChildKey[childKey as WorkspaceKey]
     }
   }
-  pruneMobileClientTabSelections(belongsToHost)
+  pruneMobileClientTabSelections(
+    (worktreeId) => belongsToHost(worktreeId) || removedFolderWorkspaceKeys.has(worktreeId)
+  )
 }

@@ -57,6 +57,7 @@ export function buildComposerCardProps(state: ComposerModel) {
     handleSmartJiraIssueSelect,
     handleSmartLinearIssueSelect,
     handleSparseSelectPreset,
+    isInPlaceTarget,
     isProjectGroupTarget,
     linkDirectLoading,
     linkItemsLoading,
@@ -96,6 +97,7 @@ export function buildComposerCardProps(state: ComposerModel) {
     setAdvancedOpen,
     setAgentPrompt,
     setAttachmentPaths,
+    setCreateInPlace,
     setCreateMultiple,
     setLinkQuery,
     setNote,
@@ -135,7 +137,18 @@ export function buildComposerCardProps(state: ComposerModel) {
     createGateMode === 'quick'
       ? getQuickComposerCreateDisabled(createGateInput)
       : getFullComposerCreateDisabled(createGateInput)
-  const createDisabled = isProjectGroupTarget ? folderCreateDisabled : repoCreateDisabled
+  // No worktree is created, so every worktree-shaped control is meaningless: branch name, start
+  // point, parent nesting, setup script, sparse checkout, ephemeral VM, create-multiple.
+  const worktreeFreeTarget = isProjectGroupTarget || isInPlaceTarget
+  // An in-place create writes no files and runs no setup, so it waits on neither probe. It still
+  // needs a reachable host and a resolved source intent.
+  const inPlaceCreateDisabled =
+    creating || sourceIntentBlocksCreate || !repoId || selectedRepoRequiresConnection
+  const createDisabled = isProjectGroupTarget
+    ? folderCreateDisabled
+    : isInPlaceTarget
+      ? inPlaceCreateDisabled
+      : repoCreateDisabled
   const cardProps: ComposerCardSourceProps & ComposerCardActionProps = {
     eligibleRepos: isProjectGroupTarget ? folderSourceRepos : eligibleRepos,
     repoId,
@@ -147,27 +160,31 @@ export function buildComposerCardProps(state: ComposerModel) {
     projectHostSetupOptions: isProjectGroupTarget ? [] : projectHostSetupOptions,
     selectedProjectHostSetupId: isProjectGroupTarget ? null : selectedProjectHostSetupId,
     onProjectHostSetupChange: handleProjectHostSetupChange,
-    ephemeralVmRecipes: isProjectGroupTarget || !ephemeralVmsEnabled ? [] : ephemeralVmRecipes,
+    ephemeralVmRecipes: worktreeFreeTarget || !ephemeralVmsEnabled ? [] : ephemeralVmRecipes,
     selectedEphemeralVmRecipeId:
-      isProjectGroupTarget || !ephemeralVmsEnabled ? null : selectedEphemeralVmRecipeId,
+      worktreeFreeTarget || !ephemeralVmsEnabled ? null : selectedEphemeralVmRecipeId,
     onEphemeralVmRecipeChange: setSelectedEphemeralVmRecipeId,
     ephemeralVmRecipeError:
-      isProjectGroupTarget || !ephemeralVmsEnabled ? null : ephemeralVmRecipeError,
+      worktreeFreeTarget || !ephemeralVmsEnabled ? null : ephemeralVmRecipeError,
     repoBackedSearchRepos: isProjectGroupTarget ? folderSourceRepos : undefined,
     repoBackedSourcesDisabled: isProjectGroupTarget ? folderSourceRepos.length === 0 : false,
     allowSmartNameAddProject: !isProjectGroupTarget,
     smartNameRepoSwitchTarget: isProjectGroupTarget ? 'task-source' : 'project',
     name,
     onNameValueChange: handleNameValueChange,
-    branchNameOverride: isProjectGroupTarget ? undefined : branchNameOverride,
-    onBranchNameOverrideChange: isProjectGroupTarget ? () => {} : handleBranchNameOverrideChange,
-    parentWorktreeId: isProjectGroupTarget ? null : parentWorktreeId,
-    onParentWorktreeIdChange: isProjectGroupTarget ? () => {} : setParentWorktreeId,
+    // Offered only for a Git project: a folder project has no worktree to skip in the first place.
+    canCreateInPlace: !isProjectGroupTarget && selectedRepoIsGit,
+    createInPlace: isInPlaceTarget,
+    onCreateInPlaceChange: setCreateInPlace,
+    branchNameOverride: worktreeFreeTarget ? undefined : branchNameOverride,
+    onBranchNameOverrideChange: worktreeFreeTarget ? () => {} : handleBranchNameOverrideChange,
+    parentWorktreeId: worktreeFreeTarget ? null : parentWorktreeId,
+    onParentWorktreeIdChange: worktreeFreeTarget ? () => {} : setParentWorktreeId,
     selectedRepoExecutionHostId: isProjectGroupTarget ? null : selectedRepoExecutionHostId,
     selectedRepoProjectId: isProjectGroupTarget ? null : selectedRepoProjectId,
     onSmartGitHubItemSelect: handleSmartGitHubItemSelect,
     onSmartGitLabItemSelect: handleSmartGitLabItemSelect,
-    onSmartBranchSelect: isProjectGroupTarget ? () => {} : handleSmartBranchSelect,
+    onSmartBranchSelect: worktreeFreeTarget ? () => {} : handleSmartBranchSelect,
     onSmartNameModeChange: setSmartNameMode,
     onSmartLinearIssueSelect: handleSmartLinearIssueSelect,
     onSmartJiraIssueSelect: handleSmartJiraIssueSelect,
@@ -177,13 +194,11 @@ export function buildComposerCardProps(state: ComposerModel) {
     smartNameSelection,
     onClearSmartNameSelection: handleClearSmartNameSelection,
     canReuseSelectedBranch:
-      !isProjectGroupTarget &&
-      reuseEligibleBranch !== null &&
-      smartNameSelection?.kind === 'branch',
+      !worktreeFreeTarget && reuseEligibleBranch !== null && smartNameSelection?.kind === 'branch',
     reuseSelectedBranch,
     onReuseSelectedBranchChange: handleReuseSelectedBranchChange,
     // Why: "create multiple" applies only to worktree (git) targets; folder-workspace keeps create-and-close.
-    showCreateMultiple: !isProjectGroupTarget,
+    showCreateMultiple: !worktreeFreeTarget,
     createMultiple,
     onCreateMultipleChange: setCreateMultiple,
     agentPrompt,
@@ -215,10 +230,10 @@ export function buildComposerCardProps(state: ComposerModel) {
     projectError: isProjectGroupTarget ? pathStatusProjectError : projectError,
     creating,
     onCreate: () => void submit(),
-    baseBranch: isProjectGroupTarget ? undefined : baseBranch,
-    onBaseBranchChange: isProjectGroupTarget ? () => {} : handleBaseBranchChange,
-    onBaseBranchPrSelect: isProjectGroupTarget ? () => {} : handleBaseBranchPrSelect,
-    onBaseBranchMrSelect: isProjectGroupTarget ? () => {} : handleBaseBranchMrSelect,
+    baseBranch: worktreeFreeTarget ? undefined : baseBranch,
+    onBaseBranchChange: worktreeFreeTarget ? () => {} : handleBaseBranchChange,
+    onBaseBranchPrSelect: worktreeFreeTarget ? () => {} : handleBaseBranchPrSelect,
+    onBaseBranchMrSelect: worktreeFreeTarget ? () => {} : handleBaseBranchMrSelect,
     baseBranchLinkedPrNumber:
       linkedWorkItem?.type === 'pr' && baseBranch ? linkedWorkItem.number : null,
     selectedRepoPath: isProjectGroupTarget ? null : (selectedRepo?.path ?? null),
@@ -238,30 +253,30 @@ export function buildComposerCardProps(state: ComposerModel) {
     onConnectSelectedRepo: isProjectGroupTarget
       ? onConnectSelectedProjectGroup
       : onConnectSelectedRepo,
-    startFromResetHint: isProjectGroupTarget ? null : startFromResetHint,
-    forkPushWarning: isProjectGroupTarget ? null : forkPushWarning,
+    startFromResetHint: worktreeFreeTarget ? null : startFromResetHint,
+    forkPushWarning: worktreeFreeTarget ? null : forkPushWarning,
     note,
     onNoteChange: setNote,
-    setupConfig: isProjectGroupTarget ? null : setupConfig,
-    requiresExplicitSetupChoice: isProjectGroupTarget ? false : requiresExplicitSetupChoice,
-    setupDecision: isProjectGroupTarget ? null : setupDecision,
-    onSetupDecisionChange: isProjectGroupTarget ? () => {} : setSetupDecision,
-    setupAgentStartupPolicy: isProjectGroupTarget ? 'start-immediately' : setupAgentStartupPolicy,
-    onSetupAgentStartupPolicyChange: isProjectGroupTarget
+    setupConfig: worktreeFreeTarget ? null : setupConfig,
+    requiresExplicitSetupChoice: worktreeFreeTarget ? false : requiresExplicitSetupChoice,
+    setupDecision: worktreeFreeTarget ? null : setupDecision,
+    onSetupDecisionChange: worktreeFreeTarget ? () => {} : setSetupDecision,
+    setupAgentStartupPolicy: worktreeFreeTarget ? 'start-immediately' : setupAgentStartupPolicy,
+    onSetupAgentStartupPolicyChange: worktreeFreeTarget
       ? () => {}
       : handleSetupAgentStartupPolicyChange,
-    shouldWaitForSetupCheck: isProjectGroupTarget ? false : shouldWaitForSetupCheck,
-    resolvedSetupDecision: isProjectGroupTarget ? null : resolvedSetupDecision,
+    shouldWaitForSetupCheck: worktreeFreeTarget ? false : shouldWaitForSetupCheck,
+    resolvedSetupDecision: worktreeFreeTarget ? null : resolvedSetupDecision,
     createError,
-    canUseSparseCheckout: isProjectGroupTarget
+    canUseSparseCheckout: worktreeFreeTarget
       ? false
       : selectedRepoIsGit && !selectedRepo?.connectionId,
-    sparsePresets: isProjectGroupTarget ? [] : sparsePresets,
-    sparseSelectedPresetId: isProjectGroupTarget ? null : sparseSelectedPresetId,
-    onSparseSelectPreset: isProjectGroupTarget ? () => {} : handleSparseSelectPreset,
-    branchesEnabled: !isProjectGroupTarget,
-    setupControlsEnabled: !isProjectGroupTarget,
-    sparseControlsEnabled: !isProjectGroupTarget
+    sparsePresets: worktreeFreeTarget ? [] : sparsePresets,
+    sparseSelectedPresetId: worktreeFreeTarget ? null : sparseSelectedPresetId,
+    onSparseSelectPreset: worktreeFreeTarget ? () => {} : handleSparseSelectPreset,
+    branchesEnabled: !worktreeFreeTarget,
+    setupControlsEnabled: !worktreeFreeTarget,
+    sparseControlsEnabled: !worktreeFreeTarget
   }
 
   return { cardProps, createDisabled }

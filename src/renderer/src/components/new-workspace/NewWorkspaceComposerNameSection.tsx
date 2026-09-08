@@ -1,5 +1,6 @@
 import React from 'react'
-import { AlertTriangle, Check } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
+import { ComposerCheckboxField } from '@/components/new-workspace/ComposerCheckboxField'
 import SmartWorkspaceNameField from '@/components/new-workspace/SmartWorkspaceNameField'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
@@ -35,6 +36,9 @@ type NewWorkspaceComposerNameSectionProps = Pick<
   | 'canReuseSelectedBranch'
   | 'reuseSelectedBranch'
   | 'onReuseSelectedBranchChange'
+  | 'canCreateInPlace'
+  | 'createInPlace'
+  | 'onCreateInPlaceChange'
 > & {
   onNamePlainEnter: () => void
 }
@@ -68,7 +72,10 @@ export function NewWorkspaceComposerNameSection({
   forkPushWarning,
   canReuseSelectedBranch,
   reuseSelectedBranch,
-  onReuseSelectedBranchChange
+  onReuseSelectedBranchChange,
+  canCreateInPlace = false,
+  createInPlace = false,
+  onCreateInPlaceChange
 }: NewWorkspaceComposerNameSectionProps): React.JSX.Element {
   return (
     <div className="min-w-0 space-y-1" data-contextual-tour-target="workspace-creation-name">
@@ -128,46 +135,35 @@ export function NewWorkspaceComposerNameSection({
         aria-hidden={!canReuseSelectedBranch}
       >
         <div className="min-h-0">
-          <div className="space-y-1 pt-1">
-            <label className="group flex w-fit items-center gap-2 text-xs text-foreground">
-              <span
-                className={cn(
-                  'flex size-4 items-center justify-center rounded-[3px] border shadow-sm transition',
-                  reuseSelectedBranch
-                    ? 'border-emerald-500/60 bg-emerald-500 text-white'
-                    : 'border-foreground/20 bg-background dark:border-white/20 dark:bg-muted/10'
-                )}
-              >
-                <Check
-                  className={cn(
-                    'size-3 transition-opacity',
-                    reuseSelectedBranch ? 'opacity-100' : 'opacity-0'
-                  )}
-                />
-              </span>
-              <input
-                type="checkbox"
-                checked={reuseSelectedBranch}
-                onChange={(event) => onReuseSelectedBranchChange(event.target.checked)}
-                disabled={!canReuseSelectedBranch}
-                className="sr-only"
-              />
-              <span>
-                {translate(
-                  'auto.components.NewWorkspaceComposerCard.reuseExistingBranch',
-                  'Reuse branch'
-                )}
-              </span>
-            </label>
-            <p className="pl-6 text-[11px] text-muted-foreground">
-              {translate(
-                'auto.components.NewWorkspaceComposerCard.reuseExistingBranchHint',
-                'Check out the existing branch instead of creating a new one from it.'
-              )}
-            </p>
-          </div>
+          <ComposerCheckboxField
+            checked={reuseSelectedBranch}
+            onCheckedChange={onReuseSelectedBranchChange}
+            disabled={!canReuseSelectedBranch}
+            label={translate(
+              'auto.components.NewWorkspaceComposerCard.reuseExistingBranch',
+              'Reuse branch'
+            )}
+            hint={translate(
+              'auto.components.NewWorkspaceComposerCard.reuseExistingBranchHint',
+              'Check out the existing branch instead of creating a new one from it.'
+            )}
+          />
         </div>
       </div>
+      {canCreateInPlace && onCreateInPlaceChange ? (
+        <ComposerCheckboxField
+          checked={createInPlace}
+          onCheckedChange={onCreateInPlaceChange}
+          label={translate(
+            'auto.components.NewWorkspaceComposerCard.createInPlace',
+            'Work without a worktree'
+          )}
+          hint={translate(
+            'auto.components.NewWorkspaceComposerCard.createInPlaceHint',
+            "Run in the project's existing checkout instead of creating a worktree. Workspaces here share one working directory and its branch."
+          )}
+        />
+      ) : null}
     </div>
   )
 }

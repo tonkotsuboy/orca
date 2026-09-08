@@ -18,6 +18,7 @@ type QuickSubmitActionInput = Pick<
   | 'effectiveLinkedPR'
   | 'executeQuickCreation'
   | 'fallbackCreatureName'
+  | 'isInPlaceTarget'
   | 'isProjectGroupTarget'
   | 'isSubmissionCancelled'
   | 'linkedPR'
@@ -44,6 +45,7 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
     effectiveLinkedPR,
     executeQuickCreation,
     fallbackCreatureName,
+    isInPlaceTarget,
     isProjectGroupTarget,
     isSubmissionCancelled,
     linkedPR,
@@ -67,7 +69,7 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
 
   const submitQuick = useCallback(
     async (requestedAgent: TuiAgent | null): Promise<void> => {
-      if (isProjectGroupTarget) {
+      if (isProjectGroupTarget || isInPlaceTarget) {
         await submitFolderTarget(requestedAgent)
         return
       }
@@ -161,6 +163,7 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
       effectiveLinkedPR,
       executeQuickCreation,
       fallbackCreatureName,
+      isInPlaceTarget,
       isProjectGroupTarget,
       isSubmissionCancelled,
       linkedPR,

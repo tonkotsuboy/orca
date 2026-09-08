@@ -5,6 +5,7 @@ export type FullSubmitOrchestrationInput = Pick<
   | 'disabledTuiAgents'
   | 'executeFullCreation'
   | 'fallbackDefaultAgent'
+  | 'isInPlaceTarget'
   | 'isProjectGroupTarget'
   | 'isSubmissionCancelled'
   | 'repoId'
@@ -41,6 +42,7 @@ export function useFullSubmitOrchestration(input: FullSubmitOrchestrationInput) 
     disabledTuiAgents,
     executeFullCreation,
     fallbackDefaultAgent,
+    isInPlaceTarget,
     isProjectGroupTarget,
     isSubmissionCancelled,
     repoId,
@@ -63,7 +65,7 @@ export function useFullSubmitOrchestration(input: FullSubmitOrchestrationInput) 
   } = input
 
   const submit = useCallback(async (): Promise<void> => {
-    if (isProjectGroupTarget) {
+    if (isProjectGroupTarget || isInPlaceTarget) {
       await submitFolderTarget(tuiAgent)
       return
     }
@@ -122,6 +124,7 @@ export function useFullSubmitOrchestration(input: FullSubmitOrchestrationInput) 
     disabledTuiAgents,
     executeFullCreation,
     fallbackDefaultAgent,
+    isInPlaceTarget,
     isProjectGroupTarget,
     isSubmissionCancelled,
     repoId,

@@ -6,6 +6,9 @@ import type { WorkspaceStatus } from '../../../../shared/worktree/types'
 import type { WorkspaceCreationTargetResolution } from '@/lib/project-host-workspace-target'
 
 export type ComposerInitialTargetModel = {
+  /** Create in the Git project's existing checkout instead of adding a worktree. */
+  createInPlace: boolean
+  setCreateInPlace: React.Dispatch<React.SetStateAction<boolean>>
   draftRepoId: string | null
   draftProjectId: string | null
   draftProjectGroupId: string | null
