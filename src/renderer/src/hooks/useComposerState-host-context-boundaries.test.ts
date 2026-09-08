@@ -19,6 +19,7 @@ const COMPOSER_SOURCE = {
   cardProps: readComposerModule('composer-card-props.ts'),
   derived: readComposerModule('derived-composer-state.ts'),
   folderSubmit: readComposerModule('folder-submit-orchestration.ts'),
+  folderSubmitTarget: readComposerModule('folder-submit-target.ts'),
   fullCreation: readComposerModule('full-creation-execution.ts'),
   fullCreationStartup: readComposerModule('full-creation-startup.ts'),
   fullSubmitOrchestration: readComposerModule('full-submit-orchestration.ts'),
@@ -243,12 +244,20 @@ describe('useComposerState host-context boundaries', () => {
     expect(targetSection).toContain('folderTargetRuntimeEnvironmentId')
     expect(targetSection).toContain('useDetectedAgents(folderTargetAgentDetectionTarget)')
 
+    // The host now reaches submit through the resolved target, so the guard follows it there:
+    // dropping the threading in either module has to keep failing this test.
+    const submitTargetSection = COMPOSER_SOURCE.folderSubmitTarget
+    expect(submitTargetSection).toContain('runtimeEnvironmentId: inPlaceRuntimeEnvironmentId')
+    expect(submitTargetSection).toContain('isRemote: inPlaceRepoIsRemote')
+    expect(submitTargetSection).toContain('runtimeEnvironmentId: folderTargetRuntimeEnvironmentId')
+    expect(submitTargetSection).toContain('isRemote: folderTargetIsRemote')
+
     const submitSection = COMPOSER_SOURCE.folderSubmit
-    expect(submitSection).toContain('isRemote: folderTargetIsRemote')
+    expect(submitSection).toContain('isRemote: folderSubmitTarget.isRemote')
     expect(submitSection).toContain(
       "launchSource: telemetrySource === 'onboarding' ? 'onboarding' : 'new_workspace_composer'"
     )
-    expect(submitSection).toContain('runtimeEnvironmentId: folderTargetRuntimeEnvironmentId')
+    expect(submitSection).toContain('runtimeEnvironmentId: folderSubmitTarget.runtimeEnvironmentId')
   })
 
   it('detects composer agents against the repo host: SSH, then runtime, then local (#7082)', () => {
