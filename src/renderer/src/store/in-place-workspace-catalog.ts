@@ -26,10 +26,9 @@ const catalogCache = new WeakMap<AppState['worktreesByRepo'], CatalogCacheEntry>
  * directory within it — so the branch and HEAD are whatever that checkout has out right now.
  */
 function resolveSharedCheckoutGitIdentity(
-  repoWorktrees: readonly Worktree[] | undefined,
+  mainWorktrees: readonly Worktree[],
   hostId: ExecutionHostId
 ): Pick<Worktree, 'branch' | 'head'> | null {
-  const mainWorktrees = repoWorktrees?.filter((worktree) => worktree.isMainWorktree) ?? []
   // Prefer the row on this workspace's own host: one repo id can be registered on several.
   const shared = mainWorktrees.find((worktree) => worktree.hostId === hostId) ?? mainWorktrees[0]
   return shared ? { branch: shared.branch, head: shared.head } : null
@@ -62,13 +61,24 @@ export function getInPlaceWorkspaceCatalog(
   }
   const knownRepoIds = new Set(state.repos.map((repo) => repo.id))
   const rowsByRepoId = new Map<string, Worktree[]>()
+  // Scanned once per project, not once per row: several in-place workspaces commonly share a
+  // checkout, and this runs inside a Zustand selector.
+  const mainWorktreesByRepoId = new Map<string, readonly Worktree[]>()
+  const mainWorktreesFor = (repoId: string): readonly Worktree[] => {
+    let mainWorktrees = mainWorktreesByRepoId.get(repoId)
+    if (!mainWorktrees) {
+      mainWorktrees = (state.worktreesByRepo[repoId] ?? []).filter((row) => row.isMainWorktree)
+      mainWorktreesByRepoId.set(repoId, mainWorktrees)
+    }
+    return mainWorktrees
+  }
   for (const folderWorkspace of state.folderWorkspaces) {
     const repoId = getFolderWorkspaceRepoId(folderWorkspace)
     if (!repoId || !knownRepoIds.has(repoId)) {
       continue
     }
     const gitIdentity = resolveSharedCheckoutGitIdentity(
-      state.worktreesByRepo[repoId],
+      mainWorktreesFor(repoId),
       getFolderWorkspaceWorktreeHostId(folderWorkspace)
     )
     const base = folderWorkspaceToWorktree(folderWorkspace)
